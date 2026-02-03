@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Gestionale Studio – Arch. Aurelio Pezzola</title>
+
   <style>
     :root {
       --nero: #111;
@@ -10,12 +11,14 @@
       --chiaro: #f5f5f5;
       --bordo: #ddd;
     }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
       background: white;
       color: var(--nero);
     }
+
     header {
       border-bottom: 2px solid var(--nero);
       padding: 24px 32px;
@@ -23,21 +26,20 @@
       justify-content: space-between;
       align-items: center;
     }
-    header h1 {
+
+    .header-titoli h1 {
       margin: 0;
       font-size: 28px;
       letter-spacing: 1px;
     }
-    header h2 {
+
+    .header-titoli h2 {
       margin: 6px 0 0;
       font-size: 14px;
       color: var(--grigio);
       font-weight: normal;
     }
-    .header-titoli {
-      display: flex;
-      flex-direction: column;
-    }
+
     .azioni-globali button {
       padding: 8px 12px;
       border: 1px solid var(--nero);
@@ -45,57 +47,79 @@
       cursor: pointer;
       font-weight: 500;
     }
+
     nav {
       display: flex;
       gap: 24px;
       padding: 16px 32px;
       border-bottom: 1px solid var(--bordo);
     }
+
     nav a {
       text-decoration: none;
       color: var(--nero);
       font-weight: 500;
     }
-    nav a:hover {
-      text-decoration: underline;
-    }
+
     main {
       padding: 32px;
     }
+
     .box {
       border: 1px solid var(--bordo);
       padding: 24px;
       margin-bottom: 24px;
     }
+
     .box h3 {
       margin-top: 0;
       font-size: 18px;
     }
+
     .placeholder {
       color: var(--grigio);
       font-style: italic;
     }
 
-    #lista-lavori li {
+    /* LISTA LAVORI */
+    #lista-lavori {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .lavoro {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       padding: 12px;
-      border: 1px solid #ddd;
+      border: 1px solid var(--bordo);
       margin-bottom: 8px;
-      cursor: pointer;
       background: white;
-      font-weight: 500;
+      cursor: pointer;
     }
-    #lista-lavori li:hover {
-      background: #f5f5f5;
+
+    .lavoro:hover {
+      background: var(--chiaro);
     }
+
+    .drag {
+      cursor: grab;
+      font-size: 18px;
+      user-select: none;
+    }
+
     .campo {
       margin-bottom: 16px;
     }
+
     .campo label {
       display: block;
       font-size: 12px;
-      color: #666;
+      color: var(--grigio);
       margin-bottom: 4px;
     }
+
     .campo input,
     .campo textarea,
     .campo select {
@@ -112,15 +136,6 @@
       }
       body {
         font-size: 12px;
-      }
-      header {
-        padding: 16px;
-      }
-      main {
-        padding: 16px;
-      }
-      .box {
-        page-break-inside: avoid;
       }
     }
   </style>
@@ -150,71 +165,67 @@
 
 <div class="box">
   <h3>Programma Lavori</h3>
-  <div style="display:flex; gap:32px;">
-    <!-- LISTA -->
-    <ul id="lista-lavori" style="width:35%; list-style:none; padding:0; margin:0;">
-      <li onclick="apriScheda(0)">☰ FRAM – Nuovo Museo</li>
-      <li onclick="apriScheda(1)">☰ Breno – Via Cambrant</li>
-      <li onclick="apriScheda(2)">☰ Erbusco – Cantina Camilucci</li>
-    </ul>
 
-    <!-- SCHEDA -->
+  <div style="display:flex; gap:32px;">
+    <ul id="lista-lavori" style="width:35%;"></ul>
+
     <div id="scheda" style="width:65%; border-left:1px solid #ddd; padding-left:24px;">
       <p class="placeholder">Seleziona un lavoro per vedere la scheda progetto.</p>
     </div>
   </div>
 </div>
 
-<div class="box">
-  <h3>Diario Progettuale</h3>
-  <p class="placeholder">
-    Diario giornaliero diviso tra Aurelio / Samuele.
-  </p>
-</div>
-
-<div class="box">
-  <h3>Agenda</h3>
-  <p class="placeholder">Appuntamenti futuri e promemoria.</p>
-</div>
-
-<div class="box">
-  <h3>Statistiche</h3>
-  <p class="placeholder">Grafici settimanali e mensili.</p>
-</div>
-
 </main>
 
 <script>
-const progetti = [
-  {
-    codice: "FRAM-01",
-    nome: "Nuovo Museo FRAM",
-    stato: "Attivo",
-    fase: "Progetto definitivo",
-    note: ""
-  },
-  {
-    codice: "BRE-02",
-    nome: "Via Cambrant",
-    stato: "In attesa",
-    fase: "Studio preliminare",
-    note: ""
-  },
-  {
-    codice: "ERB-03",
-    nome: "Cantina Camilucci",
-    stato: "In pausa",
-    fase: "Cantiere",
-    note: ""
-  }
+let progetti = JSON.parse(localStorage.getItem("progetti")) || [
+  { codice:"FRAM-01", nome:"Nuovo Museo FRAM", fase:"Progetto definitivo", stato:"Attivo", note:"" },
+  { codice:"BRE-02", nome:"Via Cambrant", fase:"Studio preliminare", stato:"In attesa", note:"" },
+  { codice:"ERB-03", nome:"Cantina Camilucci", fase:"Cantiere", stato:"In pausa", note:"" }
 ];
+
+const lista = document.getElementById("lista-lavori");
+
+function renderLista() {
+  lista.innerHTML = "";
+  progetti.forEach((p, i) => {
+    const li = document.createElement("li");
+    li.className = "lavoro";
+    li.draggable = true;
+    li.dataset.index = i;
+
+    li.innerHTML = `
+      <span class="drag">☰</span>
+      <span>${p.codice} – ${p.nome}</span>
+    `;
+
+    li.onclick = () => apriScheda(i);
+
+    li.addEventListener("dragstart", e => {
+      e.dataTransfer.setData("text/plain", i);
+    });
+
+    li.addEventListener("dragover", e => e.preventDefault());
+
+    li.addEventListener("drop", e => {
+      e.preventDefault();
+      const from = e.dataTransfer.getData("text/plain");
+      const to = i;
+      progetti.splice(to, 0, progetti.splice(from, 1)[0]);
+      salva();
+      renderLista();
+    });
+
+    lista.appendChild(li);
+  });
+}
 
 function apriScheda(i) {
   const p = progetti[i];
   document.getElementById("scheda").innerHTML = `
     <div style="display:flex; gap:16px;">
       <div class="campo" style="width:30%;">
-        <label>Codice progetto</label>
+        <label>Codice</label>
         <input value="${p.codice}" disabled>
       </div>
       <div class="campo" style="width:70%;">
@@ -224,45 +235,46 @@ function apriScheda(i) {
     </div>
 
     <div class="campo">
-      <label>Fase del lavoro</label>
-      <select>
-        <option>Studio preliminare</option>
-        <option>Progetto definitivo</option>
-        <option>Progetto esecutivo</option>
-        <option>Cantiere</option>
-        <option>Concluso</option>
+      <label>Fase</label>
+      <select onchange="p.fase=this.value; salva()">
+        <option ${p.fase=="Studio preliminare"?"selected":""}>Studio preliminare</option>
+        <option ${p.fase=="Progetto definitivo"?"selected":""}>Progetto definitivo</option>
+        <option ${p.fase=="Progetto esecutivo"?"selected":""}>Progetto esecutivo</option>
+        <option ${p.fase=="Cantiere"?"selected":""}>Cantiere</option>
+        <option ${p.fase=="Concluso"?"selected":""}>Concluso</option>
       </select>
     </div>
 
     <div class="campo">
       <label>Stato</label>
-      <select>
-        <option>Attivo</option>
-        <option>In pausa</option>
-        <option>Urgente</option>
-        <option>In attesa</option>
-        <option>Archiviato</option>
+      <select onchange="p.stato=this.value; salva()">
+        <option ${p.stato=="Attivo"?"selected":""}>Attivo</option>
+        <option ${p.stato=="In pausa"?"selected":""}>In pausa</option>
+        <option ${p.stato=="Urgente"?"selected":""}>Urgente</option>
+        <option ${p.stato=="In attesa"?"selected":""}>In attesa</option>
+        <option ${p.stato=="Archiviato"?"selected":""}>Archiviato</option>
       </select>
     </div>
 
     <div class="campo">
       <label>Note</label>
-      <textarea rows="2">${p.note}</textarea>
+      <textarea rows="2" oninput="p.note=this.value; salva()">${p.note}</textarea>
     </div>
   `;
 }
 
-function chiudiScheda() {
-  document.getElementById("scheda").innerHTML =
-    '<p class="placeholder">Seleziona un lavoro per vedere la scheda progetto.</p>';
+function salva() {
+  localStorage.setItem("progetti", JSON.stringify(progetti));
 }
 
-// ESC per chiudere la scheda
-document.addEventListener("keydown", function(e) {
+document.addEventListener("keydown", e => {
   if (e.key === "Escape") {
-    chiudiScheda();
+    document.getElementById("scheda").innerHTML =
+      '<p class="placeholder">Seleziona un lavoro per vedere la scheda progetto.</p>';
   }
 });
+
+renderLista();
 </script>
 
 </body>
