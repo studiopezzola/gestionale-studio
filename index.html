@@ -19,6 +19,9 @@
     header {
       border-bottom: 2px solid var(--nero);
       padding: 24px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     header h1 {
       margin: 0;
@@ -30,6 +33,17 @@
       font-size: 14px;
       color: var(--grigio);
       font-weight: normal;
+    }
+    .header-titoli {
+      display: flex;
+      flex-direction: column;
+    }
+    .azioni-globali button {
+      padding: 8px 12px;
+      border: 1px solid var(--nero);
+      background: white;
+      cursor: pointer;
+      font-weight: 500;
     }
     nav {
       display: flex;
@@ -61,6 +75,18 @@
       color: var(--grigio);
       font-style: italic;
     }
+
+    #lista-lavori li {
+      padding: 12px;
+      border: 1px solid #ddd;
+      margin-bottom: 8px;
+      cursor: pointer;
+      background: white;
+      font-weight: 500;
+    }
+    #lista-lavori li:hover {
+      background: #f5f5f5;
+    }
     .campo {
       margin-bottom: 16px;
     }
@@ -78,18 +104,10 @@
       border: 1px solid #ccc;
       font-family: inherit;
     }
-    .azioni {
-      margin-top: 16px;
-      text-align: right;
-    }
-    .azioni button {
-      padding: 8px 12px;
-      cursor: pointer;
-    }
 
     /* STAMPA */
     @media print {
-      nav {
+      nav, .azioni-globali {
         display: none;
       }
       body {
@@ -107,11 +125,17 @@
     }
   </style>
 </head>
+
 <body>
 
 <header>
-  <h1>GESTIONALE STUDIO</h1>
-  <h2>Architetto Aurelio Pezzola</h2>
+  <div class="header-titoli">
+    <h1>GESTIONALE STUDIO</h1>
+    <h2>Architetto Aurelio Pezzola</h2>
+  </div>
+  <div class="azioni-globali">
+    <button onclick="window.print()">🖨 Stampa</button>
+  </div>
 </header>
 
 <nav>
@@ -127,27 +151,62 @@
 <div class="box">
   <h3>Programma Lavori</h3>
   <div style="display:flex; gap:32px;">
-
-    <!-- LISTA LAVORI -->
+    <!-- LISTA -->
     <ul id="lista-lavori" style="width:35%; list-style:none; padding:0; margin:0;">
       <li onclick="apriScheda(0)">☰ FRAM – Nuovo Museo</li>
       <li onclick="apriScheda(1)">☰ Breno – Via Cambrant</li>
       <li onclick="apriScheda(2)">☰ Erbusco – Cantina Camilucci</li>
     </ul>
 
-    <!-- SCHEDA PROGETTO -->
+    <!-- SCHEDA -->
     <div id="scheda" style="width:65%; border-left:1px solid #ddd; padding-left:24px;">
       <p class="placeholder">Seleziona un lavoro per vedere la scheda progetto.</p>
     </div>
-
   </div>
 </div>
 
+<div class="box">
+  <h3>Diario Progettuale</h3>
+  <p class="placeholder">
+    Diario giornaliero diviso tra Aurelio / Samuele.
+  </p>
+</div>
+
+<div class="box">
+  <h3>Agenda</h3>
+  <p class="placeholder">Appuntamenti futuri e promemoria.</p>
+</div>
+
+<div class="box">
+  <h3>Statistiche</h3>
+  <p class="placeholder">Grafici settimanali e mensili.</p>
+</div>
+
+</main>
+
 <script>
 const progetti = [
-  { codice: "FRAM-01", nome: "Nuovo Museo FRAM", fase: "Progetto esecutivo", stato: "Attivo", note: "" },
-  { codice: "BRE-02", nome: "Via Cambrant", fase: "Studio preliminare", stato: "In attesa", note: "" },
-  { codice: "ERB-03", nome: "Cantina Camilucci", fase: "Cantiere", stato: "Urgente", note: "" }
+  {
+    codice: "FRAM-01",
+    nome: "Nuovo Museo FRAM",
+    stato: "Attivo",
+    fase: "Progetto definitivo",
+    note: ""
+  },
+  {
+    codice: "BRE-02",
+    nome: "Via Cambrant",
+    stato: "In attesa",
+    fase: "Studio preliminare",
+    note: ""
+  },
+  {
+    codice: "ERB-03",
+    nome: "Cantina Camilucci",
+    stato: "In pausa",
+    fase: "Cantiere",
+    note: ""
+  }
 ];
 
 function apriScheda(i) {
@@ -167,22 +226,22 @@ function apriScheda(i) {
     <div class="campo">
       <label>Fase del lavoro</label>
       <select>
-        <option ${p.fase==="Studio preliminare"?"selected":""}>Studio preliminare</option>
-        <option ${p.fase==="Progetto definitivo"?"selected":""}>Progetto definitivo</option>
-        <option ${p.fase==="Progetto esecutivo"?"selected":""}>Progetto esecutivo</option>
-        <option ${p.fase==="Cantiere"?"selected":""}>Cantiere</option>
-        <option ${p.fase==="Concluso"?"selected":""}>Concluso</option>
+        <option>Studio preliminare</option>
+        <option>Progetto definitivo</option>
+        <option>Progetto esecutivo</option>
+        <option>Cantiere</option>
+        <option>Concluso</option>
       </select>
     </div>
 
     <div class="campo">
       <label>Stato</label>
       <select>
-        <option ${p.stato==="Attivo"?"selected":""}>Attivo</option>
-        <option ${p.stato==="In pausa"?"selected":""}>In pausa</option>
-        <option ${p.stato==="Urgente"?"selected":""}>Urgente</option>
-        <option ${p.stato==="In attesa"?"selected":""}>In attesa</option>
-        <option ${p.stato==="Archiviato"?"selected":""}>Archiviato</option>
+        <option>Attivo</option>
+        <option>In pausa</option>
+        <option>Urgente</option>
+        <option>In attesa</option>
+        <option>Archiviato</option>
       </select>
     </div>
 
@@ -190,29 +249,21 @@ function apriScheda(i) {
       <label>Note</label>
       <textarea rows="2">${p.note}</textarea>
     </div>
-
-    <div class="azioni">
-      <button onclick="window.print()">🖨 Stampa</button>
-    </div>
   `;
 }
+
+function chiudiScheda() {
+  document.getElementById("scheda").innerHTML =
+    '<p class="placeholder">Seleziona un lavoro per vedere la scheda progetto.</p>';
+}
+
+// ESC per chiudere la scheda
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") {
+    chiudiScheda();
+  }
+});
 </script>
 
-<div class="box">
-  <h3>Diario Progettuale</h3>
-  <p class="placeholder">Diario giornaliero diviso tra Aurelio / Samuele.</p>
-</div>
-
-<div class="box">
-  <h3>Agenda</h3>
-  <p class="placeholder">Appuntamenti futuri e promemoria.</p>
-</div>
-
-<div class="box">
-  <h3>Statistiche</h3>
-  <p class="placeholder">Grafici settimanali e mensili.</p>
-</div>
-
-</main>
 </body>
 </html>
