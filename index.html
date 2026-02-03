@@ -119,13 +119,21 @@
 <div class="box">
   <h3>Programma Lavori</h3>
 
-  <ul id="lista-lavori" style="list-style:none; padding:0; margin:0;">
-    <li draggable="true">☰ Mura Visconteo – Venete</li>
-    <li draggable="true">☰ Nuovo Museo FRAM</li>
-    <li draggable="true">☰ Breno, Via Cambrant</li>
-    <li draggable="true">☰ Erbusco, Cantina Camilucci</li>
-    <li draggable="true">☰ Riva, Casa Fantecolo</li>
-  </ul>
+  <div style="display:flex; gap:32px;">
+
+    <!-- LISTA -->
+    <ul id="lista-lavori" style="width:35%; list-style:none; padding:0; margin:0;">
+      <li onclick="apriScheda(0)">☰ FRAM – Nuovo Museo</li>
+      <li onclick="apriScheda(1)">☰ Breno – Via Cambrant</li>
+      <li onclick="apriScheda(2)">☰ Erbusco – Cantina Camilucci</li>
+    </ul>
+
+    <!-- SCHEDA -->
+    <div id="scheda" style="width:65%; border-left:1px solid #ddd; padding-left:24px;">
+      <p class="placeholder">Seleziona un lavoro per vedere la scheda progetto.</p>
+    </div>
+
+  </div>
 </div>
 
 <style>
@@ -133,52 +141,97 @@
     padding: 12px;
     border: 1px solid #ddd;
     margin-bottom: 8px;
-    cursor: grab;
+    cursor: pointer;
     background: white;
     font-weight: 500;
   }
 
-  #lista-lavori li.dragging {
-    opacity: 0.4;
+  #lista-lavori li:hover {
+    background: #f5f5f5;
+  }
+
+  .campo {
+    margin-bottom: 16px;
+  }
+
+  .campo label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+
+  .campo input,
+  .campo textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    font-family: inherit;
   }
 </style>
 
 <script>
-  const list = document.getElementById("lista-lavori");
-  let draggedItem = null;
-
-  list.addEventListener("dragstart", e => {
-    draggedItem = e.target;
-    e.target.classList.add("dragging");
-  });
-
-  list.addEventListener("dragend", e => {
-    e.target.classList.remove("dragging");
-    draggedItem = null;
-  });
-
-  list.addEventListener("dragover", e => {
-    e.preventDefault();
-    const afterElement = getDragAfterElement(list, e.clientY);
-    if (afterElement == null) {
-      list.appendChild(draggedItem);
-    } else {
-      list.insertBefore(draggedItem, afterElement);
+  const progetti = [
+    {
+      codice: "FRAM-01",
+      nome: "Nuovo Museo FRAM",
+      ubicazione: "Brescia",
+      stato: "In corso",
+      fase: "Progettazione",
+      note: ""
+    },
+    {
+      codice: "BRE-02",
+      nome: "Via Cambrant",
+      ubicazione: "Breno",
+      stato: "In attesa",
+      fase: "Studio preliminare",
+      note: ""
+    },
+    {
+      codice: "ERB-03",
+      nome: "Cantina Camilucci",
+      ubicazione: "Erbusco",
+      stato: "In corso",
+      fase: "Direzione lavori",
+      note: ""
     }
-  });
+  ];
 
-  function getDragAfterElement(container, y) {
-    const elements = [...container.querySelectorAll("li:not(.dragging)")];
+  function apriScheda(i) {
+    const p = progetti[i];
 
-    return elements.reduce((closest, child) => {
-      const box = child.getBoundingClientRect();
-      const offset = y - box.top - box.height / 2;
-      if (offset < 0 && offset > closest.offset) {
-        return { offset: offset, element: child };
-      } else {
-        return closest;
-      }
-    }, { offset: Number.NEGATIVE_INFINITY }).element;
+    document.getElementById("scheda").innerHTML = `
+      <div class="campo">
+        <label>Codice progetto</label>
+        <input value="${p.codice}">
+      </div>
+
+      <div class="campo">
+        <label>Nome progetto</label>
+        <input value="${p.nome}">
+      </div>
+
+      <div class="campo">
+        <label>Ubicazione</label>
+        <input value="${p.ubicazione}">
+      </div>
+
+      <div class="campo">
+        <label>Stato</label>
+        <input value="${p.stato}">
+      </div>
+
+      <div class="campo">
+        <label>Fase</label>
+        <input value="${p.fase}">
+      </div>
+
+      <div class="campo">
+        <label>Note</label>
+        <textarea rows="4">${p.note}</textarea>
+      </div>
+    `;
   }
 </script>
 
