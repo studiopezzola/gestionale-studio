@@ -14,18 +14,26 @@
 body {
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   margin:0;
+  background:white;
   color:var(--nero);
 }
 
 header {
+  border-bottom:2px solid var(--nero);
+  padding:24px 32px;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:24px 32px;
-  border-bottom:2px solid var(--nero);
 }
 
-nav { display:none; } /* per ora nascondiamo tutto il resto */
+nav { display:none; }
+
+button {
+  padding:8px 12px;
+  border:1px solid var(--nero);
+  background:white;
+  cursor:pointer;
+}
 
 main { padding:32px; }
 
@@ -34,66 +42,78 @@ main { padding:32px; }
   padding:24px;
 }
 
-#lista-lavori {
+h3 { margin-top:0; }
+
+#programma {
+  display:flex;
+  gap:32px;
+}
+
+#lista {
+  width:35%;
   list-style:none;
   padding:0;
   margin:0;
-  width:35%;
 }
 
-#lista-lavori li {
-  padding:12px;
-  border:1px solid #ddd;
-  margin-bottom:8px;
-  cursor:grab;
-  background:white;
-  font-weight:500;
+#lista li {
   display:flex;
   align-items:center;
   gap:8px;
+  padding:10px;
+  border:1px solid var(--bordo);
+  margin-bottom:8px;
+  cursor:pointer;
+  background:white;
 }
 
-#lista-lavori li:hover { background:#f5f5f5; }
-
-.maniglia {
+.handle {
   cursor:grab;
 }
 
-/* COLORI STATO */
-.stato-Attivo { border-left:6px solid #2ecc71; }
-.stato-Urgente { border-left:6px solid #e74c3c; }
-.stato-In-pausa { border-left:6px solid #f39c12; }
-.stato-In-attesa { border-left:6px solid #7f8c8d; }
-.stato-Archiviato { border-left:6px solid #bdc3c7; opacity:.6; }
+.stato {
+  font-size:11px;
+  padding:2px 6px;
+  border-radius:4px;
+  color:white;
+}
+
+.stato.Attivo { background:#2ecc71; }
+.stato.Urgente { background:#e74c3c; }
+.stato.In\ pausa { background:#f39c12; }
+.stato.In\ attesa { background:#3498db; }
+.stato.Archiviato { background:#7f8c8d; }
 
 #scheda {
   width:65%;
-  border-left:1px solid #ddd;
+  border-left:1px solid var(--bordo);
   padding-left:24px;
 }
 
-.campo { margin-bottom:16px; }
-.campo label {
-  font-size:12px;
-  color:#666;
-  display:block;
-  margin-bottom:4px;
+.campo {
+  margin-bottom:14px;
 }
-.campo input,.campo select,.campo textarea {
+
+label {
+  font-size:12px;
+  color:var(--grigio);
+}
+
+input, textarea, select {
   width:100%;
   padding:8px;
   border:1px solid #ccc;
+  font-family:inherit;
 }
 
-.placeholder {
-  color:#666;
-  font-style:italic;
+#feedback {
+  font-size:12px;
+  color:green;
+  margin-top:8px;
 }
 
-/* STAMPA */
 @media print {
-  .azioni-globali { display:none; }
-  body { font-size:12px; }
+  button { display:none; }
 }
 </style>
 </head>
@@ -101,108 +121,94 @@ main { padding:32px; }
 <body>
 
 <header>
-  <div>
-    <h1>GESTIONALE STUDIO</h1>
-    <h2 style="font-weight:normal;color:#666">Architetto Aurelio Pezzola</h2>
-  </div>
-  <div class="azioni-globali">
-    <button onclick="window.print()">🖨 Stampa</button>
-  </div>
+  <h1>GESTIONALE STUDIO</h1>
+  <button onclick="window.print()">🖨 Stampa</button>
 </header>
 
 <main>
 <div class="box">
 <h3>Programma Lavori</h3>
 
-<div style="display:flex;gap:32px;">
-  <ul id="lista-lavori"></ul>
+<button onclick="aggiungi()">＋ Aggiungi lavoro</button>
 
-  <div id="scheda">
-    <p class="placeholder">Seleziona un lavoro per vedere la scheda progetto.</p>
-  </div>
+<div id="programma">
+<ul id="lista"></ul>
+<div id="scheda"><em>Seleziona un lavoro</em></div>
 </div>
 </div>
 </main>
 
 <script>
-let progetti = JSON.parse(localStorage.getItem("progetti")) || [
-  { codice:"FRAM-01", nome:"Nuovo Museo FRAM", stato:"Attivo", fase:"Progetto definitivo", note:"" },
-  { codice:"BRE-02", nome:"Via Cambrant", stato:"In attesa", fase:"Studio preliminare", note:"" },
-  { codice:"ERB-03", nome:"Cantina Camilucci", stato:"In-pausa", fase:"Cantiere", note:"" }
+let lavori = JSON.parse(localStorage.getItem("lavori")) || [
+  {codice:"FRAM-01", nome:"Nuovo Museo FRAM", stato:"Attivo", fase:"Progetto definitivo", note:""},
+  {codice:"BRE-02", nome:"Via Cambrant", stato:"In attesa", fase:"Studio preliminare", note:""}
 ];
 
+let attivo = null;
+
 function salva() {
-  localStorage.setItem("progetti", JSON.stringify(progetti));
+  localStorage.setItem("lavori", JSON.stringify(lavori));
+  document.getElementById("feedback")?.remove();
+  document.getElementById("scheda")?.insertAdjacentHTML("beforeend","<div id='feedback'>✓ salvato</div>");
 }
 
 function renderLista() {
-  const lista = document.getElementById("lista-lavori");
-  lista.innerHTML = "";
-
-  progetti.forEach((p,i)=>{
-    const li = document.createElement("li");
-    li.className = "stato-" + p.stato;
-    li.draggable = true;
-    li.innerHTML = `<span class="maniglia">☰</span> ${p.nome}`;
-    li.onclick = () => apriScheda(i);
-
-    li.addEventListener("dragstart",e=>e.dataTransfer.setData("i",i));
-    li.addEventListener("dragover",e=>e.preventDefault());
-    li.addEventListener("drop",e=>{
-      const from = e.dataTransfer.getData("i");
-      const to = i;
-      progetti.splice(to,0,progetti.splice(from,1)[0]);
-      salva(); renderLista();
-    });
-
-    lista.appendChild(li);
+  const ul = document.getElementById("lista");
+  ul.innerHTML = "";
+  lavori.forEach((l,i)=>{
+    ul.innerHTML += `
+      <li onclick="apri(${i})" draggable="true" ondragstart="drag(${i})" ondrop="drop(${i})" ondragover="event.preventDefault()">
+        <span class="handle">☰</span>
+        ${l.codice} – ${l.nome}
+        <span class="stato ${l.stato}">${l.stato}</span>
+      </li>`;
   });
 }
 
-function apriScheda(i){
-  const p = progetti[i];
+function apri(i) {
+  attivo = i;
+  const l = lavori[i];
   document.getElementById("scheda").innerHTML = `
-    <div style="display:flex;gap:16px;">
-      <div class="campo" style="width:30%">
-        <label>Codice</label>
-        <input value="${p.codice}" disabled>
-      </div>
-      <div class="campo" style="width:70%">
-        <label>Nome</label>
-        <input value="${p.nome}" disabled>
-      </div>
-    </div>
-
-    <div class="campo">
-      <label>Fase</label>
-      <select onchange="p.fase=this.value;salva()">
-        ${["Studio preliminare","Progetto definitivo","Progetto esecutivo","Cantiere","Concluso"]
-          .map(f=>`<option ${p.fase===f?"selected":""}>${f}</option>`).join("")}
+    <div class="campo"><label>Codice</label><input value="${l.codice}" oninput="lavori[${i}].codice=this.value;salva();renderLista()"></div>
+    <div class="campo"><label>Nome</label><input value="${l.nome}" oninput="lavori[${i}].nome=this.value;salva();renderLista()"></div>
+    <div class="campo"><label>Fase</label><input value="${l.fase}" oninput="lavori[${i}].fase=this.value;salva()"></div>
+    <div class="campo"><label>Stato</label>
+      <select onchange="lavori[${i}].stato=this.value;salva();renderLista()">
+        ${["Attivo","Urgente","In pausa","In attesa","Archiviato"].map(s=>`<option ${l.stato==s?"selected":""}>${s}</option>`).join("")}
       </select>
     </div>
-
-    <div class="campo">
-      <label>Stato</label>
-      <select onchange="p.stato=this.value;salva();renderLista()">
-        ${["Attivo","Urgente","In-pausa","In-attesa","Archiviato"]
-          .map(s=>`<option ${p.stato===s?"selected":""}>${s}</option>`).join("")}
-      </select>
-    </div>
-
-    <div class="campo">
-      <label>Note</label>
-      <textarea rows="2" oninput="p.note=this.value;salva()">${p.note}</textarea>
-    </div>
+    <div class="campo"><label>Note</label><textarea rows="2" oninput="lavori[${i}].note=this.value;salva()">${l.note}</textarea></div>
+    <button onclick="elimina(${i})">🗑 Elimina lavoro</button>
   `;
 }
 
-function chiudiScheda(){
-  document.getElementById("scheda").innerHTML =
-    '<p class="placeholder">Seleziona un lavoro per vedere la scheda progetto.</p>';
+function aggiungi() {
+  lavori.push({codice:"", nome:"Nuovo lavoro", stato:"Attivo", fase:"", note:""});
+  salva();
+  renderLista();
+}
+
+function elimina(i) {
+  if(confirm("Eliminare questo lavoro?")) {
+    lavori.splice(i,1);
+    salva();
+    renderLista();
+    document.getElementById("scheda").innerHTML="<em>Seleziona un lavoro</em>";
+  }
+}
+
+let dragIndex;
+function drag(i){ dragIndex=i; }
+function drop(i){
+  const tmp = lavori[dragIndex];
+  lavori.splice(dragIndex,1);
+  lavori.splice(i,0,tmp);
+  salva();
+  renderLista();
 }
 
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape") chiudiScheda();
+  if(e.key==="Escape") document.getElementById("scheda").innerHTML="<em>Seleziona un lavoro</em>";
 });
 
 renderLista();
