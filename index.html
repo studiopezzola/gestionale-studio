@@ -116,13 +116,62 @@
 
   <main>
 
-    <div class="box">
-      <h3>Programma Lavori</h3>
+<div class="box">
+  <h3>Programma Lavori</h3>
+
+  <div style="display:flex; gap:32px;">
+
+    <div style="width:40%;">
+      <ul id="lista-lavori" style="list-style:none; padding:0; margin:0;"></ul>
+    </div>
+
+    <div style="width:60%;">
       <p class="placeholder">
-        Qui comparirà l’elenco dei lavori.<br>
-        Cliccando su un lavoro si apriranno le schede (dati, stato, priorità, ecc).
+        Seleziona un lavoro per vedere i dettagli.
       </p>
     </div>
+
+  </div>
+</div>
+
+<script>
+  const lavori = [
+    { nome: "Mura Visconteo – Venete", priorita: 5 },
+    { nome: "Nuovo Museo FRAM", priorita: 8 },
+    { nome: "Breno, Via Cambrant", priorita: 6 },
+    { nome: "Erbusco, Cantina Camilucci", priorita: 4 },
+    { nome: "Riva, Casa Fantecolo", priorita: 7 }
+  ];
+
+  function render() {
+    const lista = document.getElementById("lista-lavori");
+    lista.innerHTML = "";
+
+    lavori
+      .sort((a, b) => b.priorita - a.priorita)
+      .forEach(lavoro => {
+        const li = document.createElement("li");
+        li.style.marginBottom = "16px";
+        li.style.borderBottom = "1px solid #ddd";
+        li.style.paddingBottom = "8px";
+
+        li.innerHTML = `
+          <strong>${lavoro.nome}</strong><br>
+          Priorità:
+          <input type="range" min="1" max="10" value="${lavoro.priorita}">
+        `;
+
+        li.querySelector("input").addEventListener("input", e => {
+          lavoro.priorita = e.target.value;
+          render();
+        });
+
+        lista.appendChild(li);
+      });
+  }
+
+  render();
+</script>
 
     <div class="box">
       <h3>Diario Progettuale</h3>
