@@ -5,105 +5,118 @@
 <title>Gestionale Studio – Arch. Aurelio Pezzola</title>
 
 <style>
-:root {
+:root{
   --nero:#111;
+  --grigio:#666;
   --bordo:#ddd;
+  --fase:#eaeaea;
+
+  --attivo:#c8f0d1;
+  --urgente:#f6c1c1;
+  --attesa:#f6e7b4;
+  --archiviato:#c9daf8;
 }
 
-/* BASE */
-body {
+body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   margin:0;
   background:white;
   color:var(--nero);
 }
 
-header {
-  border-bottom:2px solid var(--nero);
+header{
   padding:24px 32px;
+  border-bottom:2px solid var(--nero);
   display:flex;
   justify-content:space-between;
-  align-items:center;
 }
 
-main { padding:32px; }
-
-button {
-  padding:8px 12px;
-  border:1px solid var(--nero);
-  background:white;
-  cursor:pointer;
+nav{
+  padding:16px 32px;
+  border-bottom:1px solid var(--bordo);
 }
 
-/* PROGRAMMA */
-#programma {
+nav a{
+  margin-right:24px;
+  text-decoration:none;
+  color:var(--nero);
+  font-weight:500;
+}
+
+main{ padding:32px; }
+
+.box{
+  border:1px solid var(--bordo);
+  padding:24px;
+}
+
+h3{ margin-top:0; }
+
+#programma{
   display:flex;
   gap:32px;
 }
 
-#lista {
+/* LISTA */
+#lista-lavori{
   width:35%;
   list-style:none;
   padding:0;
   margin:0;
 }
 
-#lista li {
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:10px;
+.lavoro{
   border:1px solid var(--bordo);
+  padding:12px;
   margin-bottom:8px;
+  cursor:pointer;
   background:white;
 }
 
-.handle { cursor:grab; }
+.lavoro strong{ font-weight:700; }
 
-/* TAG */
-.tag {
-  font-size:11px;
+.badge{
   padding:2px 6px;
+  margin-left:6px;
+  font-size:12px;
   border-radius:4px;
-  color:white;
+  display:inline-block;
 }
 
-/* FASI */
-.fase.Progettazione { background:#2c3e50; }
-.fase.Modellazione { background:#8e44ad; }
-.fase.Relazione { background:#2980b9; }
-.fase.Ricerca { background:#16a085; }
-.fase.Sopralluogo { background:#d35400; }
-.fase.Riunione { background:#c0392b; }
-.fase.Coordinamento { background:#7f8c8d; }
-.fase.Altro { background:#34495e; }
+.fase{ background:var(--fase); }
 
-/* STATI */
-.stato.Attivo { background:#27ae60; }
-.stato.Urgente { background:#e74c3c; }
-.stato.In_attesa { background:#3498db; }
-.stato.Archiviato { background:#7f8c8d; }
+.attivo{ background:var(--attivo); }
+.urgente{ background:var(--urgente); }
+.attesa{ background:var(--attesa); }
+.archiviato{ background:var(--archiviato); }
 
 /* SCHEDA */
-#scheda {
+#scheda{
   width:65%;
   border-left:1px solid var(--bordo);
   padding-left:24px;
 }
 
-.campo { margin-bottom:14px; }
-label { font-size:12px; color:#666; }
+.campo{ margin-bottom:16px; }
 
-input, textarea, select {
+label{
+  display:block;
+  font-size:12px;
+  color:var(--grigio);
+  margin-bottom:4px;
+}
+
+input,select,textarea{
   width:100%;
   padding:8px;
   border:1px solid #ccc;
+  font-family:inherit;
 }
 
 /* STAMPA */
-@media print {
-  #scheda, button { display:none; }
-  #lista { width:100%; }
+@media print{
+  nav, #scheda, button{ display:none; }
+  #lista-lavori{ width:100%; }
 }
 </style>
 </head>
@@ -111,120 +124,117 @@ input, textarea, select {
 <body>
 
 <header>
-  <h1>GESTIONALE STUDIO</h1>
+  <div>
+    <h1>GESTIONALE STUDIO</h1>
+    <h2>Architetto Aurelio Pezzola</h2>
+  </div>
   <button onclick="window.print()">🖨 Stampa</button>
 </header>
 
+<nav>
+  <a href="#">Programma Lavori</a>
+</nav>
+
 <main>
-<button onclick="aggiungi()">＋ Aggiungi lavoro</button>
+<div class="box">
+<h3>Programma Lavori</h3>
+
+<button onclick="aggiungiLavoro()">＋ Aggiungi lavoro</button>
 
 <div id="programma">
-<ul id="lista"></ul>
+<ul id="lista-lavori"></ul>
 <div id="scheda"><em>Seleziona un lavoro</em></div>
+</div>
 </div>
 </main>
 
 <script>
-const FASI = [
-  ["Progettazione","Progettazione generale"],
-  ["Modellazione","Modellazione tridimensionale"],
-  ["Relazione","Relazione scritta"],
-  ["Ricerca","Studio e ricerca"],
-  ["Sopralluogo","Sopralluogo cantiere"],
-  ["Riunione","Riunione / incontro"],
-  ["Coordinamento","Coordinamento / DL"],
-  ["Altro","Altro"]
+let progetti=[
+{codice:"FRAM-01",titolo:"Nuovo Museo FRAM",fase:"Progettazione Generale",stato:"Attivo",note:""},
+{codice:"BRE-02",titolo:"Via Cambrant",fase:"Ricerca - Studio",stato:"In attesa",note:""}
 ];
 
-let lavori = JSON.parse(localStorage.getItem("lavori")) || [
-  {codice:"FRAM-01", nome:"Nuovo Museo FRAM", fase:"Progettazione", stato:"Attivo", note:""}
+const fasi=[
+"Progettazione Generale",
+"Modellazione",
+"Relazione Illustrativa",
+"Ricerca - Studio",
+"Sopralluogo Cantiere",
+"Riunione - Incontro",
+"Direzione Lavori - Coordinamento",
+"Altro"
 ];
 
-function salva() {
-  localStorage.setItem("lavori", JSON.stringify(lavori));
+const stati=["Attivo","Urgente","In attesa","Archiviato"];
+
+function statoClasse(s){
+  return s==="Attivo"?"attivo":
+         s==="Urgente"?"urgente":
+         s==="In attesa"?"attesa":"archiviato";
 }
 
-function render() {
-  const ul = document.getElementById("lista");
-  ul.innerHTML = "";
-  lavori.forEach((l,i)=>{
-    ul.innerHTML += `
-      <li draggable="true" ondragstart="drag(${i})" ondrop="drop(${i})" ondragover="event.preventDefault()">
-        <span class="handle">☰</span>
-        <strong>${l.codice}</strong> – ${l.nome}
-        <span class="tag fase ${l.fase}">${l.fase}</span>
-        <span class="tag stato ${l.stato.replace(" ","_")}">${l.stato}</span>
-        <span style="margin-left:auto;cursor:pointer" onclick="apri(${i})">✎</span>
-      </li>`;
+function renderLista(){
+  const ul=document.getElementById("lista-lavori");
+  ul.innerHTML="";
+  progetti.forEach((p,i)=>{
+    const li=document.createElement("li");
+    li.className="lavoro";
+    li.onclick=()=>apriScheda(i);
+    li.innerHTML=`
+      <strong>${p.codice}</strong> – ${p.titolo}
+      <span class="badge fase">${p.fase}</span>
+      <span class="badge ${statoClasse(p.stato)}">${p.stato}</span>
+    `;
+    ul.appendChild(li);
   });
 }
 
-function apri(i) {
-  const l = lavori[i];
-  document.getElementById("scheda").innerHTML = `
+function apriScheda(i){
+  const p=progetti[i];
+  document.getElementById("scheda").innerHTML=`
     <div class="campo">
       <label>Codice</label>
-      <input value="${l.codice}" style="font-weight:bold"
-        oninput="lavori[${i}].codice=this.value;salva();render()">
+      <input value="${p.codice}" oninput="p.codice=this.value">
     </div>
-
     <div class="campo">
-      <label>Nome</label>
-      <input value="${l.nome}"
-        oninput="lavori[${i}].nome=this.value;salva();render()">
+      <label>Titolo</label>
+      <input value="${p.titolo}" oninput="p.titolo=this.value">
     </div>
-
     <div class="campo">
       <label>Fase</label>
-      <select onchange="lavori[${i}].fase=this.value;salva();render()">
-        ${FASI.map(f=>`<option value="${f[0]}" ${l.fase===f[0]?"selected":""}>${f[1]}</option>`).join("")}
+      <select onchange="p.fase=this.value">
+        ${fasi.map(f=>`<option ${f===p.fase?"selected":""}>${f}</option>`).join("")}
       </select>
     </div>
-
     <div class="campo">
       <label>Stato</label>
-      <select onchange="lavori[${i}].stato=this.value;salva();render()">
-        ${["Attivo","Urgente","In attesa","Archiviato"].map(s=>`<option ${l.stato===s?"selected":""}>${s}</option>`).join("")}
+      <select onchange="p.stato=this.value">
+        ${stati.map(s=>`<option ${s===p.stato?"selected":""}>${s}</option>`).join("")}
       </select>
     </div>
-
     <div class="campo">
       <label>Note</label>
-      <textarea rows="2"
-        oninput="lavori[${i}].note=this.value;salva()">${l.note}</textarea>
+      <textarea rows="2" oninput="p.note=this.value">${p.note}</textarea>
     </div>
-
-    <button onclick="elimina(${i})">🗑 Elimina lavoro</button>
+    <button onclick="progetti.splice(${i},1);chiudiScheda();renderLista()">🗑 Elimina lavoro</button>
   `;
+  renderLista();
 }
 
-function aggiungi() {
-  lavori.push({codice:"", nome:"Nuovo lavoro", fase:"Progettazione", stato:"Attivo", note:""});
-  salva(); render();
+function aggiungiLavoro(){
+  progetti.push({codice:"",titolo:"Nuovo lavoro",fase:fasi[0],stato:"Attivo",note:""});
+  renderLista();
 }
 
-function elimina(i) {
-  if(confirm("Eliminare questo lavoro?")) {
-    lavori.splice(i,1);
-    salva(); render();
-    document.getElementById("scheda").innerHTML="<em>Seleziona un lavoro</em>";
-  }
-}
-
-let dragIndex;
-function drag(i){ dragIndex=i; }
-function drop(i){
-  const tmp=lavori[dragIndex];
-  lavori.splice(dragIndex,1);
-  lavori.splice(i,0,tmp);
-  salva(); render();
+function chiudiScheda(){
+  document.getElementById("scheda").innerHTML="<em>Seleziona un lavoro</em>";
 }
 
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape") document.getElementById("scheda").innerHTML="<em>Seleziona un lavoro</em>";
+  if(e.key==="Escape") chiudiScheda();
 });
 
-render();
+renderLista();
 </script>
 
 </body>
