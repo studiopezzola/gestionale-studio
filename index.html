@@ -119,59 +119,69 @@
 <div class="box">
   <h3>Programma Lavori</h3>
 
-  <div style="display:flex; gap:32px;">
-
-    <div style="width:40%;">
-      <ul id="lista-lavori" style="list-style:none; padding:0; margin:0;"></ul>
-    </div>
-
-    <div style="width:60%;">
-      <p class="placeholder">
-        Seleziona un lavoro per vedere i dettagli.
-      </p>
-    </div>
-
-  </div>
+  <ul id="lista-lavori" style="list-style:none; padding:0; margin:0;">
+    <li draggable="true">☰ Mura Visconteo – Venete</li>
+    <li draggable="true">☰ Nuovo Museo FRAM</li>
+    <li draggable="true">☰ Breno, Via Cambrant</li>
+    <li draggable="true">☰ Erbusco, Cantina Camilucci</li>
+    <li draggable="true">☰ Riva, Casa Fantecolo</li>
+  </ul>
 </div>
 
-<script>
-  const lavori = [
-    { nome: "Mura Visconteo – Venete", priorita: 5 },
-    { nome: "Nuovo Museo FRAM", priorita: 8 },
-    { nome: "Breno, Via Cambrant", priorita: 6 },
-    { nome: "Erbusco, Cantina Camilucci", priorita: 4 },
-    { nome: "Riva, Casa Fantecolo", priorita: 7 }
-  ];
-
-  function render() {
-    const lista = document.getElementById("lista-lavori");
-    lista.innerHTML = "";
-
-    lavori
-      .sort((a, b) => b.priorita - a.priorita)
-      .forEach(lavoro => {
-        const li = document.createElement("li");
-        li.style.marginBottom = "16px";
-        li.style.borderBottom = "1px solid #ddd";
-        li.style.paddingBottom = "8px";
-
-        li.innerHTML = `
-          <strong>${lavoro.nome}</strong><br>
-          Priorità:
-          <input type="range" min="1" max="10" value="${lavoro.priorita}">
-        `;
-
-        li.querySelector("input").addEventListener("input", e => {
-          lavoro.priorita = e.target.value;
-          render();
-        });
-
-        lista.appendChild(li);
-      });
+<style>
+  #lista-lavori li {
+    padding: 12px;
+    border: 1px solid #ddd;
+    margin-bottom: 8px;
+    cursor: grab;
+    background: white;
+    font-weight: 500;
   }
 
-  render();
+  #lista-lavori li.dragging {
+    opacity: 0.4;
+  }
+</style>
+
+<script>
+  const list = document.getElementById("lista-lavori");
+  let draggedItem = null;
+
+  list.addEventListener("dragstart", e => {
+    draggedItem = e.target;
+    e.target.classList.add("dragging");
+  });
+
+  list.addEventListener("dragend", e => {
+    e.target.classList.remove("dragging");
+    draggedItem = null;
+  });
+
+  list.addEventListener("dragover", e => {
+    e.preventDefault();
+    const afterElement = getDragAfterElement(list, e.clientY);
+    if (afterElement == null) {
+      list.appendChild(draggedItem);
+    } else {
+      list.insertBefore(draggedItem, afterElement);
+    }
+  });
+
+  function getDragAfterElement(container, y) {
+    const elements = [...container.querySelectorAll("li:not(.dragging)")];
+
+    return elements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      } else {
+        return closest;
+      }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
 </script>
+
 
     <div class="box">
       <h3>Diario Progettuale</h3>
