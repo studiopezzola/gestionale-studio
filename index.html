@@ -18,8 +18,8 @@
 }
 
 body{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   color:var(--nero);
 }
 
@@ -53,6 +53,7 @@ main{padding:32px;}
   gap:32px;
 }
 
+/* LISTA */
 #lista{
   width:40%;
   list-style:none;
@@ -65,24 +66,20 @@ main{padding:32px;}
   padding:12px;
   margin-bottom:8px;
   cursor:pointer;
-  display:flex;
-  gap:8px;
-  align-items:center;
   background:white;
 }
 
-.drag{
-  cursor:grab;
-  font-weight:bold;
-}
+.item:hover{background:var(--bg);}
 
-.codice{font-weight:bold;}
+.codice{font-weight:bold;margin-right:6px;}
 
 .tag{
+  display:inline-block;
   padding:2px 6px;
   font-size:12px;
   border-radius:3px;
   background:#eee;
+  margin-left:4px;
 }
 
 .stato.attivo{background:var(--attivo);}
@@ -90,6 +87,7 @@ main{padding:32px;}
 .stato.attesa{background:var(--attesa);}
 .stato.archiviato{background:var(--archiviato);color:white;}
 
+/* SCHEDA */
 #scheda{
   width:60%;
   border-left:1px solid var(--bordo);
@@ -98,21 +96,24 @@ main{padding:32px;}
 
 .campo{margin-bottom:16px;}
 label{display:block;font-size:12px;color:var(--grigio);margin-bottom:4px;}
-input,select,textarea{
-  width:100%;
-  padding:8px;
-  font-family:inherit;
+input,textarea{width:100%;padding:8px;font-family:inherit;}
+
+.fasi button{
+  margin:4px 4px 0 0;
+  padding:6px 8px;
+  border:1px solid var(--bordo);
+  background:#eee;
+  cursor:pointer;
 }
 
-.azioni{
-  display:flex;
-  gap:8px;
-  margin-top:16px;
+.fasi button.attiva{
+  background:#ccc;
+  font-weight:bold;
 }
 
 /* STAMPA */
 @media print{
-  header, #scheda, .azioni-globali{display:none;}
+  header,#scheda,button{display:none;}
   #lista{width:100%;}
   body{font-size:12px;}
 }
@@ -126,15 +127,14 @@ input,select,textarea{
     <h1>GESTIONALE STUDIO</h1>
     <h2>Architetto Aurelio Pezzola</h2>
   </div>
-  <div class="azioni-globali">
-    <button onclick="window.print()">🖨 Stampa</button>
-    <button onclick="nuovo()">＋ Nuovo lavoro</button>
-  </div>
+  <button onclick="window.print()">🖨 Stampa</button>
 </header>
 
 <main>
 <div class="box">
   <h3>Programma Lavori</h3>
+  <button onclick="nuovo()">＋ Nuovo lavoro</button>
+
   <div id="layout">
     <ul id="lista"></ul>
     <div id="scheda"><em>Seleziona un lavoro</em></div>
@@ -161,12 +161,11 @@ const STATI={
 "Archiviato":"archiviato"
 };
 
-let progetti=JSON.parse(localStorage.getItem("progetti"))||[
-{codice:"FRAM-01",titolo:"Nuovo Museo FRAM",fase:FASI[0],stato:"Attivo",note:""},
-{codice:"BRE-02",titolo:"Via Cambrant",fase:FASI[3],stato:"In attesa",note:""}
+let progetti = JSON.parse(localStorage.getItem("progetti")) || [
+  {codice:"FRAM-01",titolo:"Nuovo Museo FRAM",fasi:["Progettazione Generale"],stato:"Attivo",note:""}
 ];
 
-let attivo=null;
+let attivo = null;
 
 function salva(){
   localStorage.setItem("progetti",JSON.stringify(progetti));
@@ -179,14 +178,14 @@ function render(){
   progetti.forEach((p,i)=>{
     const li=document.createElement("li");
     li.className="item";
+    li.onclick=()=>apri(i);
+
     li.innerHTML=`
-      <span class="drag">☰</span>
       <span class="codice">${p.codice}</span>
-      <span>${p.titolo}</span>
-      <span class="tag">${p.fase}</span>
+      ${p.titolo}
+      ${p.fasi.map(f=>`<span class="tag">${f}</span>`).join("")}
       <span class="tag stato ${STATI[p.stato]}">${p.stato}</span>
     `;
-    li.onclick=()=>apri(i);
     ul.appendChild(li);
   });
 }
@@ -194,66 +193,71 @@ function render(){
 function apri(i){
   attivo=i;
   const p=progetti[i];
+
   document.getElementById("scheda").innerHTML=`
     <div class="campo">
       <label>Codice</label>
       <input value="${p.codice}" oninput="pCodice(this.value)">
     </div>
+
     <div class="campo">
       <label>Titolo</label>
       <input value="${p.titolo}" oninput="pTitolo(this.value)">
     </div>
+
     <div class="campo">
-      <label>Fase</label>
-      <select onchange="pFase(this.value)">
-        ${FASI.map(f=>`<option ${f===p.fase?"selected":""}>${f}</option>`).join("")}
-      </select>
+      <label>FASI</label>
+      <div class="fasi">
+        ${FASI.map(f=>`
+          <button class="${p.fasi.includes(f)?'attiva':''}"
+            onclick="toggleFase('${f}')">${f}</button>
+        `).join("")}
+      </div>
     </div>
+
     <div class="campo">
       <label>Stato</label>
       <select onchange="pStato(this.value)">
-        ${Object.keys(STATI).map(s=>`<option ${s===p.stato?"selected":""}>${s}</option>`).join("")}
+        ${Object.keys(STATI).map(s=>`
+          <option ${s===p.stato?'selected':''}>${s}</option>
+        `).join("")}
       </select>
     </div>
+
     <div class="campo">
       <label>Note</label>
       <textarea rows="2" oninput="pNote(this.value)">${p.note}</textarea>
     </div>
-    <div class="azioni">
-      <button onclick="elimina()">Elimina</button>
-    </div>
+
+    <button onclick="elimina()">Elimina</button>
   `;
 }
 
 function pCodice(v){progetti[attivo].codice=v;salva();}
 function pTitolo(v){progetti[attivo].titolo=v;salva();}
-function pFase(v){progetti[attivo].fase=v;salva();}
 function pStato(v){progetti[attivo].stato=v;salva();}
 function pNote(v){progetti[attivo].note=v;salva();}
 
+function toggleFase(f){
+  const a=progetti[attivo].fasi;
+  a.includes(f)?a.splice(a.indexOf(f),1):a.push(f);
+  salva();
+}
+
 function nuovo(){
-  progetti.push({codice:"",titolo:"Nuovo progetto",fase:FASI[0],stato:"Attivo",note:""});
+  progetti.push({codice:"",titolo:"Nuovo progetto",fasi:[],stato:"Attivo",note:""});
   salva();
 }
 
 function elimina(){
-  if(attivo===null)return;
   progetti.splice(attivo,1);
   attivo=null;
   document.getElementById("scheda").innerHTML="<em>Seleziona un lavoro</em>";
   salva();
 }
 
-document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){
-    attivo=null;
-    document.getElementById("scheda").innerHTML="<em>Seleziona un lavoro</em>";
-  }
-});
-
 render();
 </script>
 
 </body>
 </html>
-
