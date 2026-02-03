@@ -197,41 +197,62 @@
     }
   ];
 
-  function apriScheda(i) {
-    const p = progetti[i];
+function apriScheda(i) {
+  const p = progetti[i];
 
-    document.getElementById("scheda").innerHTML = `
-      <div class="campo">
+  document.getElementById("scheda").innerHTML = `
+
+    <!-- CODICE + NOME -->
+    <div style="display:flex; gap:16px;">
+      <div class="campo" style="width:30%;">
         <label>Codice progetto</label>
-        <input value="${p.codice}">
+        <input value="${p.codice}" disabled>
       </div>
 
-      <div class="campo">
+      <div class="campo" style="width:70%;">
         <label>Nome progetto</label>
-        <input value="${p.nome}">
+        <input value="${p.nome}" disabled>
       </div>
+    </div>
 
-      <div class="campo">
-        <label>Ubicazione</label>
-        <input value="${p.ubicazione}">
-      </div>
+    <!-- UBICAZIONE -->
+    <div class="campo">
+      <label>Ubicazione</label>
+      <input value="${p.ubicazione}">
+    </div>
 
-      <div class="campo">
-        <label>Stato</label>
-        <input value="${p.stato}">
-      </div>
+    <!-- STATO -->
+    <div class="campo">
+      <label>Stato</label>
+      <select>
+        <option ${p.stato === "In corso" ? "selected" : ""}>In corso</option>
+        <option ${p.stato === "In attesa" ? "selected" : ""}>In attesa</option>
+        <option ${p.stato === "Concluso" ? "selected" : ""}>Concluso</option>
+        <option ${p.stato === "Sospeso" ? "selected" : ""}>Sospeso</option>
+      </select>
+    </div>
 
-      <div class="campo">
-        <label>Fase</label>
-        <input value="${p.fase}">
-      </div>
+    <!-- FASE -->
+    <div class="campo">
+      <label>Fase</label>
+      <select>
+        <option ${p.fase === "Studio preliminare" ? "selected" : ""}>Studio preliminare</option>
+        <option ${p.fase === "Progettazione" ? "selected" : ""}>Progettazione</option>
+        <option ${p.fase === "Esecutivo" ? "selected" : ""}>Esecutivo</option>
+        <option ${p.fase === "Direzione lavori" ? "selected" : ""}>Direzione lavori</option>
+        <option ${p.fase === "Concluso" ? "selected" : ""}>Concluso</option>
+      </select>
+    </div>
 
-      <div class="campo">
-        <label>Note</label>
-        <textarea rows="4">${p.note}</textarea>
-      </div>
-    `;
-  }
+    <!-- NOTE -->
+    <div class="campo">
+      <label>Note</label>
+      <textarea rows="2">${p.note}</textarea>
+    </div>
+
+  `;
+}
+
 </script>
 
     <div class="box">
