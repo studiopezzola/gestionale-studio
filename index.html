@@ -2,50 +2,51 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Gestionale Studio – Arch. Aurelio Pezzola</title>
+<title>Gestionale Studio – Programma Lavori</title>
 
 <style>
 :root{
   --nero:#111;
-  --grigio:#666;
   --bordo:#ddd;
-  --fase:#eee;
+  --grigio:#f2f2f2;
 
-  --attivo:#3aa655;
-  --urgente:#d64545;
-  --attesa:#f2c94c;
-  --archiviato:#4a6fa5;
+  --attivo:#c8f7c5;
+  --urgente:#f7c5c5;
+  --attesa:#f7f3c5;
+  --archiviato:#c5d9f7;
 }
 
 body{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-family: system-ui, sans-serif;
   margin:0;
   color:var(--nero);
 }
 
 header{
+  padding:20px 32px;
+  border-bottom:2px solid var(--nero);
   display:flex;
   justify-content:space-between;
-  align-items:center;
-  padding:24px 32px;
-  border-bottom:2px solid var(--nero);
 }
 
-nav{display:none;}
-
-main{padding:32px;}
-
-.box{
-  border:1px solid var(--bordo);
-  padding:24px;
+button{
+  padding:6px 10px;
+  border:1px solid var(--nero);
+  background:white;
+  cursor:pointer;
 }
 
-#layout{
+main{
+  padding:32px;
+}
+
+.layout{
   display:flex;
   gap:32px;
 }
 
-#lista-lavori{
+/* LISTA */
+#lista{
   width:40%;
   list-style:none;
   padding:0;
@@ -55,66 +56,47 @@ main{padding:32px;}
 .lavoro{
   border:1px solid var(--bordo);
   padding:12px;
-  margin-bottom:10px;
-  background:#fff;
+  margin-bottom:8px;
   cursor:pointer;
-  display:flex;
-  gap:8px;
-  align-items:flex-start;
+  background:white;
 }
 
-.maniglia{
-  cursor:grab;
-  user-select:none;
-}
+.lavoro:hover{ background:#f5f5f5 }
 
-.info{
-  flex:1;
-}
-
-.codice{
-  font-weight:bold;
-}
+.codice{ font-weight:700; margin-right:6px }
 
 .badge{
   display:inline-block;
-  padding:2px 8px;
+  padding:2px 6px;
   font-size:12px;
-  margin-right:6px;
+  margin-left:6px;
+  background:var(--grigio);
 }
 
-.fase{background:var(--fase);}
-.attivo{background:var(--attivo);color:#fff;}
-.urgente{background:var(--urgente);color:#fff;}
-.attesa{background:var(--attesa);}
-.archiviato{background:var(--archiviato);color:#fff;}
+.stato.Attivo{ background:var(--attivo) }
+.stato.Urgente{ background:var(--urgente) }
+.stato.In_attesa{ background:var(--attesa) }
+.stato.Archiviato{ background:var(--archiviato) }
 
+/* SCHEDA */
 #scheda{
   width:60%;
   border-left:1px solid var(--bordo);
   padding-left:24px;
 }
 
-.campo{margin-bottom:14px;}
-.campo label{font-size:12px;color:var(--grigio);}
-.campo input,.campo textarea{width:100%;padding:6px;}
-
-.fasi button,.stati button{
-  margin:4px 4px 4px 0;
-  padding:6px 10px;
+.campo{ margin-bottom:16px }
+label{ font-size:12px; color:#666 }
+input,select,textarea{
+  width:100%;
+  padding:8px;
   border:1px solid var(--bordo);
-  cursor:pointer;
 }
 
-.fasi .attiva{background:#ccc;}
-.stati .attivo{background:var(--attivo);color:#fff;}
-.stati .urgente{background:var(--urgente);color:#fff;}
-.stati .attesa{background:var(--attesa);}
-.stati .archiviato{background:var(--archiviato);color:#fff;}
-
+/* STAMPA */
 @media print{
-  header button,#scheda{display:none;}
-  #lista-lavori{width:100%;}
+  header, #scheda, button{ display:none }
+  #lista{ width:100% }
 }
 </style>
 </head>
@@ -124,104 +106,123 @@ main{padding:32px;}
 <header>
   <div>
     <h1>GESTIONALE STUDIO</h1>
-    <small>Arch. Aurelio Pezzola</small>
+    <small>Programma Lavori</small>
   </div>
-  <button onclick="window.print()">🖨 Stampa</button>
+  <div>
+    <button onclick="aggiungi()">＋ Nuovo</button>
+    <button onclick="window.print()">🖨 Stampa</button>
+  </div>
 </header>
 
 <main>
-<div class="box">
-<h3>Programma Lavori</h3>
-<button onclick="aggiungi()">＋ Aggiungi lavoro</button>
+<div class="layout">
 
-<div id="layout">
-<ul id="lista-lavori"></ul>
-<div id="scheda"><em>Seleziona un lavoro</em></div>
+<ul id="lista"></ul>
+
+<div id="scheda">
+  <em>Seleziona un lavoro</em>
 </div>
+
 </div>
 </main>
 
 <script>
-const FASI=[
-"Progettazione Generale","Modellazione","Relazione Illustrativa",
-"Ricerca - Studio","Sopralluogo Cantiere","Riunione - Incontro",
-"Direzione Lavori - Coordinamento","Altro"
+const FASI = [
+  "Progettazione Generale",
+  "Modellazione",
+  "Relazione Illustrativa",
+  "Ricerca - Studio",
+  "Sopralluogo Cantiere",
+  "Riunione - Incontro",
+  "Direzione Lavori - Coordinamento",
+  "Altro"
 ];
-const STATI=["Attivo","Urgente","In attesa","Archiviato"];
 
-let progetti=JSON.parse(localStorage.getItem("progetti"))||[
-{codice:"PR-01",titolo:"Nuovo Progetto",fase:FASI[0],stato:"Attivo",note:""}
+const STATI = ["Attivo","Urgente","In attesa","Archiviato"];
+
+let lavori = JSON.parse(localStorage.getItem("lavori")) || [
+  {codice:"PR-01", titolo:"Nuovo Museo", fase:FASI[0], stato:"Attivo", note:""}
 ];
+
+let attivo = null;
 
 function salva(){
-  localStorage.setItem("progetti",JSON.stringify(progetti));
+  localStorage.setItem("lavori", JSON.stringify(lavori));
   render();
 }
 
 function render(){
-  const ul=document.getElementById("lista-lavori");
-  ul.innerHTML="";
-  progetti.forEach((p,i)=>{
-    ul.innerHTML+=`
-<li class="lavoro" onclick="apri(${i})" draggable="true"
- ondragstart="drag=i" ondragover="event.preventDefault()"
- ondrop="sposta(${i})">
-<span class="maniglia">☰</span>
-<div class="info">
-<div><span class="codice">${p.codice}</span> – ${p.titolo}</div>
-<span class="badge fase">${p.fase}</span>
-<span class="badge ${classe(p.stato)}">${p.stato}</span>
-</div>
-</li>`;
+  const ul = document.getElementById("lista");
+  ul.innerHTML = "";
+  lavori.forEach((l,i)=>{
+    const li = document.createElement("li");
+    li.className="lavoro";
+    li.innerHTML = `
+      <span class="codice">${l.codice}</span>
+      ${l.titolo}
+      <span class="badge">${l.fase}</span>
+      <span class="badge stato ${l.stato.replace(" ","_")}">${l.stato}</span>
+    `;
+    li.onclick = ()=>apri(i);
+    ul.appendChild(li);
   });
 }
 
-function classe(s){
- return s=="Attivo"?"attivo":s=="Urgente"?"urgente":s=="In attesa"?"attesa":"archiviato";
-}
-
 function apri(i){
- const p=progetti[i];
- document.getElementById("scheda").innerHTML=`
-<div class="campo"><label>Codice</label>
-<input value="${p.codice}" oninput="p.codice=this.value;salva()"></div>
-
-<div class="campo"><label>Titolo</label>
-<input value="${p.titolo}" oninput="p.titolo=this.value;salva()"></div>
-
-<div class="campo"><label>Fase</label>
-<div class="fasi">
-${FASI.map(f=>`<button class="${p.fase==f?"attiva":""}"
- onclick="p.fase='${f}';salva()">${f}</button>`).join("")}
-</div></div>
-
-<div class="campo"><label>Stato</label>
-<div class="stati">
-${STATI.map(s=>`<button class="${classe(s)}"
- onclick="p.stato='${s}';salva()">${s}</button>`).join("")}
-</div></div>
-
-<div class="campo"><label>Note</label>
-<textarea rows="2" oninput="p.note=this.value;salva()">${p.note}</textarea></div>
-
-<button onclick="progetti.splice(${i},1);salva()">🗑 Elimina</button>
-`;
-}
-
-let drag=null;
-function sposta(i){
- const m=progetti.splice(drag,1)[0];
- progetti.splice(i,0,m);
- salva();
+  attivo = i;
+  const l = lavori[i];
+  document.getElementById("scheda").innerHTML = `
+    <div class="campo">
+      <label>Codice</label>
+      <input value="${l.codice}" oninput="lavori[${i}].codice=this.value;salva()">
+    </div>
+    <div class="campo">
+      <label>Titolo</label>
+      <input value="${l.titolo}" oninput="lavori[${i}].titolo=this.value;salva()">
+    </div>
+    <div class="campo">
+      <label>Fase</label>
+      <select onchange="lavori[${i}].fase=this.value;salva()">
+        ${FASI.map(f=>`<option ${f==l.fase?"selected":""}>${f}</option>`).join("")}
+      </select>
+    </div>
+    <div class="campo">
+      <label>Stato</label>
+      <select onchange="lavori[${i}].stato=this.value;salva()">
+        ${STATI.map(s=>`<option ${s==l.stato?"selected":""}>${s}</option>`).join("")}
+      </select>
+    </div>
+    <div class="campo">
+      <label>Note</label>
+      <textarea rows="2" oninput="lavori[${i}].note=this.value;salva()">${l.note}</textarea>
+    </div>
+    <button onclick="elimina(${i})">🗑 Elimina</button>
+  `;
 }
 
 function aggiungi(){
- progetti.push({codice:"NUOVO",titolo:"Nuovo lavoro",fase:FASI[0],stato:"Attivo",note:""});
- salva();
+  lavori.push({
+    codice:"NUOVO",
+    titolo:"Nuovo lavoro",
+    fase:FASI[0],
+    stato:"Attivo",
+    note:""
+  });
+  salva();
+}
+
+function elimina(i){
+  if(confirm("Eliminare il lavoro?")){
+    lavori.splice(i,1);
+    document.getElementById("scheda").innerHTML="<em>Seleziona un lavoro</em>";
+    salva();
+  }
 }
 
 document.addEventListener("keydown",e=>{
- if(e.key==="Escape")document.getElementById("scheda").innerHTML="<em>Seleziona un lavoro</em>";
+  if(e.key==="Escape"){
+    document.getElementById("scheda").innerHTML="<em>Seleziona un lavoro</em>";
+  }
 });
 
 render();
